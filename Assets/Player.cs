@@ -5,35 +5,29 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    //For Fields we start with camelCase
+    [SerializeField] private float speed = 1f, rotationSpeed = 10f;
+    [SerializeField] private InputManager inputManager;
 
-    [SerializeField]
-    private float speed = 1f, rotationSpeed = 10f;
+    private bool isWalking;
 
     private void Update()
     {
-        Vector2 inputVector = new Vector2(0, 0);
-        
-        if (Input.GetKey(KeyCode.W))
-        {
-            inputVector.y += 1;
-        }       
-        if (Input.GetKey(KeyCode.S))
-        {
-            inputVector.y -= 1;
-        }     
-        if (Input.GetKey(KeyCode.A))
-        {
-            inputVector.x -= 1;
-        }      
-        if (Input.GetKey(KeyCode.D))
-        {
-            inputVector.x += 1;
-        }
+        //Moved vector logic to the InputManager Class
+        Vector2 inputVector = inputManager.GetMovementVectorNormalized();
 
-        inputVector = inputVector.normalized;
         Vector3 movementDirection = new Vector3(inputVector.x, 0,inputVector.y);
         transform.position += movementDirection * speed * Time.deltaTime;
 
+        //if the move direction isnt zero the player is walking
+        isWalking = movementDirection != Vector3.zero;
+
         transform.forward = Vector3.Slerp(transform.forward, movementDirection, Time.deltaTime * rotationSpeed);
+    }
+
+    //For functions we have PascalCase
+    public bool IsWalking() 
+    {
+        return isWalking;
     }
 }
