@@ -688,6 +688,9 @@ MonoBehaviour:
   speed: 5
   rotationSpeed: 20
   inputManager: {fileID: 2071760692}
+  countersLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!1001 &1398352302
 PrefabInstance:
   m_ObjectHideFlags: 0

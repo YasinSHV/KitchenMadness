@@ -1,17 +1,48 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 
 public class Player : MonoBehaviour
 {
-    //For Fields we start with camelCase
+    //proprty is written in PascalCase
+    public static Player Instance { get; private set; }
+
+    public event EventHandler<OnCounterSelectedEventArgs> OnCounterSelected;
+    public class OnCounterSelectedEventArgs : EventArgs 
+    {
+        public ClearCounter selectedCounter;
+    }
+
+    //For Fields we name with camelCase
     [SerializeField] private float speed = 1f, rotationSpeed = 10f;
     [SerializeField] private InputManager inputManager;
     [SerializeField] private LayerMask countersLayer;
 
     private bool isWalking;
     private Vector3 lastMovementDirection;
+    private Vector3 lastMovement;
+    private ClearCounter selectedCounter;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+    }
+
+    private void Start()
+    {
+        inputManager.OnInteractAction += InputManager_OnInteractAction;
+    }
+
+    private void InputManager_OnInteractAction(object sender, System.EventArgs e)
+    {
+        if (selectedCounter)
+            selectedCounter.Interact();
+    }
 
     private void Update()
     {
@@ -69,8 +100,10 @@ public class Player : MonoBehaviour
 
         //if the move direction isnt zero the player is walking
         isWalking = movementDirection != Vector3.zero;
+        if (lastMovement != movementDirection)
+            lastMovement = movementDirection;
 
-        transform.forward = Vector3.Slerp(transform.forward, movementDirection, Time.deltaTime * rotationSpeed);
+        transform.forward = Vector3.Slerp(transform.forward, lastMovement, Time.deltaTime * rotationSpeed);
     }
 
     private void HandleIntractions()
@@ -83,14 +116,32 @@ public class Player : MonoBehaviour
             lastMovementDirection = movementDirection;
         }
 
-        float interactDistance = 2f;
-        if(Physics.Raycast(transform.position, lastMovementDirection, out RaycastHit raycastHit, interactDistance)) ;
+        float interactDistance = 1f;
+        if (Physics.Raycast(transform.position, lastMovementDirection, out RaycastHit raycastHit, interactDistance, countersLayer))
         {
             if (raycastHit.transform.TryGetComponent(out ClearCounter clearCounter))
             {
-                //Is clearCounter
-                clearCounter.Interact();
+                if (clearCounter != selectedCounter)
+                    SetSelectedCounter(clearCounter);
+                //Look at Counter
+                transform.forward = Vector3.Slerp(transform.forward, lastMovementDirection, Time.deltaTime * rotationSpeed);
+            }
+            else
+            {
+                SetSelectedCounter(null);
             }
         }
+        else 
+        {
+            SetSelectedCounter(null);
+        }
+    }
+    private void SetSelectedCounter(ClearCounter selectedCounter)
+    {
+        this.selectedCounter = selectedCounter;
+        OnCounterSelected?.Invoke(this, new OnCounterSelectedEventArgs
+        {
+            selectedCounter = selectedCounter
+        });
     }
 }
